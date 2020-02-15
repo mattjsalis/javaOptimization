@@ -40,7 +40,7 @@ public class TestCategoricalOptimization implements CostFunction_IF{
 			funcValue = -Math.abs(Math.sin(x)*Math.cos(y)*Math.exp(Math.abs(1 - Math.hypot(x,y)/Math.PI)));
 		}
 		
-		return new CheckParameterOutput(funcValue,parameters);
+		return new CategoricalOutput(funcValue);
 	}
 	
 	public static class CategoricalOutput implements CostFunctionOutput_IF{
@@ -54,9 +54,9 @@ public class TestCategoricalOptimization implements CostFunction_IF{
 		}
 
 		@Override
-		public boolean isNewCostFunctionOutputBetter(CostFunctionOutput_IF oldCFOutput,
+		public boolean isNewCostFunctionOutputBetter(
 				CostFunctionOutput_IF newCFOutput) {
-			if (((CategoricalOutput)newCFOutput).getValue() < ((CategoricalOutput)oldCFOutput).getValue() &&
+			if (((CategoricalOutput)newCFOutput).getValue() < this.getValue() &&
 					isSolutionWithinRestraints()){
 				return true;
 			}
@@ -85,66 +85,12 @@ public class TestCategoricalOptimization implements CostFunction_IF{
 
 		@Override
 		public boolean isSolutionWithinRestraints() {
-			if (value > 1.0){
-				return true;
-			}
-			return false;
+			return true;
 		}
 		
 	}
 	
-	public static class CheckParameterOutput implements CostFunctionOutput_IF{
-		
-		double x = 0.0;
-		double y = 0.0;
-		Double value = null;
-		public CheckParameterOutput(double value,Parameter... parameters){
-			x = parameters[0].getCurrentValueAsDouble();
-			y = parameters[1].getCurrentValueAsDouble();
-			this.value = value;
-		}
-
-		@Override
-		public boolean isNewCostFunctionOutputBetter(CostFunctionOutput_IF oldCFOutput,
-				CostFunctionOutput_IF newCFOutput) {
-			if (((CheckParameterOutput)newCFOutput).getValue() < ((CheckParameterOutput)oldCFOutput).getValue() &&
-					isSolutionWithinRestraints()){
-				return true;
-			}
-			return false;
-		}
-
-		private double getValue() {
-			// TODO Auto-generated method stub
-			return this.value;
-		}
-
-		@Override
-		public boolean isOptimizationCriterionSatisified() {
-			return false;
-		}
-
-		@Override
-		public boolean isSolutionWithinRestraints() {
-			if ( x + y < 1.0 && x + y > -1.0){
-				return true;
-			}
-			return false;
-		}
-
-		@Override
-		public void printOutput() {
-			// TODO Auto-generated method stub
-			
-		}
-
-		@Override
-		public String getOutputAsString() {
-			// TODO Auto-generated method stub
-			return String.valueOf(value);
-		}
-		
-	}
+	
 	
 	public static void main(String[] args){
 		ParticleSwarm swarm = new ParticleSwarm(30,5000,0.01,

@@ -77,7 +77,7 @@ public class Particle {
 				param.updateAndBoundCurrentValue(param.getCurrentValueAsDouble() + param.getParticleVelocity());
 			}
 		} else {
-			if (costFunctionOutput.isNewCostFunctionOutputBetter(bestValue.getCostFunctionOutput(), costFunctionOutput)){
+			if (bestValue.getCostFunctionOutput().isNewCostFunctionOutputBetter(costFunctionOutput)){
 				this.bestValue = new BestDiscoveredSolution(parameters,costFunctionOutput);
 			}
 

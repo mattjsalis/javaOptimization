@@ -45,8 +45,8 @@ public class ParticleSwarm implements Optimizer_IF{
 	//Set optimization to run indefinitely until a time limit is specified
 	private boolean runForSpecifiedTime = false;
 	//Max runtime is seconds
-	private long maxRunTime = 300;
-	private long startTime = -1;
+	private double maxRunTime = 300;
+	private Double startTime = null;
 	/**
 	 * <pre>
 	 * Constructor that defines the number of particles, maximum optimization generations, and maximum percentage of
@@ -94,14 +94,11 @@ public class ParticleSwarm implements Optimizer_IF{
 	 */
 	private void restartSwarm(){
 		if (swarmOverallBest == null || 
-				swarmBest.getCostFunctionOutput()
-				.isNewCostFunctionOutputBetter(swarmOverallBest.getCostFunctionOutput(), swarmBest.getCostFunctionOutput())){
-			try {
-				this.swarmOverallBest = swarmBest.clone();
-			} catch (CloneNotSupportedException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			}
+				swarmOverallBest.getCostFunctionOutput()
+				.isNewCostFunctionOutputBetter(swarmBest.getCostFunctionOutput())){
+
+			this.swarmOverallBest = swarmBest;
+
 		}
 		this.swarmBest = null;
 		this.particles.stream().forEach(
@@ -117,8 +114,8 @@ public class ParticleSwarm implements Optimizer_IF{
 	
 	@Override
 	public BestDiscoveredSolution optimize(CostFunction_IF costFunction) {
-		if (startTime == -1){
-			startTime = System.nanoTime()/1000000000;
+		if (startTime == null){
+			startTime = Double.valueOf(System.nanoTime())/1E9;
 		}
 		int convCount = 0;
 		for (int i_gen = 0; i_gen < maxGenerations;i_gen++){
@@ -127,7 +124,7 @@ public class ParticleSwarm implements Optimizer_IF{
 				CostFunctionOutput_IF output = costFunction.evaluateCostFunction(particles.get(i_part).getParameters());
 				if (output.isOptimizationCriterionSatisified()){
 					return new BestDiscoveredSolution(particles.get(i_part).getParameters(),output);
-				} else if (swarmBest == null || output.isNewCostFunctionOutputBetter(swarmBest.getCostFunctionOutput(), output) 
+				} else if (swarmBest == null || swarmBest.getCostFunctionOutput().isNewCostFunctionOutputBetter(output) 
 						){
 					if (output.isSolutionWithinRestraints()){
 						betterValueFound = true;
@@ -135,7 +132,6 @@ public class ParticleSwarm implements Optimizer_IF{
 					}
 				}
 				particles.get(i_part).updateParameters(inertialCoefficient, cognitiveCoefficient, socialCoefficient, swarmBest, output);
-				
 			}
 			if (swarmBest != null){
 				System.out.println("Generation: " + String.valueOf(i_gen) + ",Best Value: " + swarmBest.getCostFunctionOutput().getOutputAsString());
@@ -151,16 +147,23 @@ public class ParticleSwarm implements Optimizer_IF{
 			} else {
 				convCount = 0;
 			}
+			double elapsedTime = Double.valueOf(System.nanoTime())/1E9;
+			if (runForSpecifiedTime && elapsedTime - startTime > Double.valueOf(maxRunTime)){
+				return swarmOverallBest;
+			}
 		}
 		
-		if (runForSpecifiedTime){
-			long elapsedTime = System.nanoTime()/1000000000;
+		if (runForSpecifiedTime && !swarmOverallBest.getCostFunctionOutput().isOptimizationCriterionSatisified()){
+			double elapsedTime = Double.valueOf(System.nanoTime())/1E9;
 			if (elapsedTime - startTime < maxRunTime){
 				optimize(costFunction);
 			}
 				
 		}
-		return swarmOverallBest;
+		if (swarmOverallBest != null){
+			return swarmOverallBest;
+		}
+		return swarmBest;
 	}
 	
 	/**
@@ -174,7 +177,7 @@ public class ParticleSwarm implements Optimizer_IF{
 	 * @param secToRunFor
 	 * @return
 	 */
-	public ParticleSwarm setOptimizationToRunForPeriodOfTime(long secToRunFor){
+	public ParticleSwarm setOptimizationToRunForPeriodOfTime(double secToRunFor){
 		this.maxRunTime = secToRunFor;
 		this.runForSpecifiedTime = true;
 		return this;

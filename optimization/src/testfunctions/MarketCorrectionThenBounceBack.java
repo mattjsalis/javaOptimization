@@ -5,7 +5,9 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.Arrays;
 import java.util.HashMap;
+import java.util.stream.Collectors;
 
 import optimization.BestDiscoveredSolution;
 import optimization.CostFunctionOutput_IF;
@@ -14,33 +16,91 @@ import optimization.Parameter;
 import optimization.pso.ParticleParameter;
 import optimization.pso.ParticleSwarm;
 
-public class HomeValueCostFunction implements CostFunction_IF{
+public class MarketCorrectionThenBounceBack implements CostFunction_IF{
 	double salePrice = 400000.0;
 	double startRent = 1200.0;
 	double hoaFee = 300.0;
 	int mortgageTerm = 360; //months
 	double downPayment = 15000.0;
 	double percClosingCost = 3.0; //percentage of home value paid in closing cost
-	
 	double	rateOfAppreciation = 2.5;
 	double	interestRate = 3.5;
+	//Total percentage and length of correction
+	double correctionPercPerYear = 10;
+	double monthsCorrection = 12;
+	double roommateRent = 800;
+	int numberOfRoommates = 1;
+	double monthlyOutOfPocket = 0.0;
 	
+	public int getNumberOfRoommates() {
+		return numberOfRoommates;
+	}
+
+	public void setNumberOfRoommates(int numberOfRoommates) {
+		this.numberOfRoommates = numberOfRoommates;
+	}
+
+	public double getHoaFee() {
+		return hoaFee;
+	}
+
+	public void setHoaFee(double hoaFee) {
+		this.hoaFee = hoaFee;
+	}
+
 	public static void main(String[] args) throws IOException{
-		String report = "Rent,SalePrice,Appreciation,NumMonthsToEqualize\n";
-		Path reportFilePath = Paths.get("C:\\Users\\Matt\\Desktop\\home_risk_report\\", "no_roommate_report.csv");
+		String report = "MonthsOfCorrection,TotalCorrectionPerc,Rent,NumRoommates,RoommateRent,HOAFee,SalePrice,AppreciationAfterCorrection,NumMonthsToEqualize,AverageMonthlyOutOfPocket\n";
+		Path reportFilePath = Paths.get("C:\\Users\\Matt\\Desktop\\home_risk_report\\", "bounce_back_report.csv");
 		File reportFile = new File(reportFilePath.toString());
 		double[] salePrice = {350000,375000,400000,425000,450000,475000,500000};
-		double[] appreciation = {0.5,1.0,1.5,2.0,2.5,3.0,3.5};
+		double[] appreciation = {2.0,2.5,3.0,3.5,4.0,4.5,5.0};
+		int[] roommates = {0,1,2};
+		
 		for (int i_sp = 0;i_sp < salePrice.length;i_sp++){
 			for (int i_app = 0;i_app < appreciation.length;i_app++){
-				ParticleSwarm pso = new ParticleSwarm(30,1000,0.01,new ParticleParameter(0,360));
-				HomeValueCostFunction homeValueFunc = new HomeValueCostFunction(salePrice[i_sp],appreciation[i_app]);
-				BestDiscoveredSolution monthAtEqualLoss = pso.optimize(homeValueFunc);
-				monthAtEqualLoss.printSolution();
-				HomeValueOutput output = (HomeValueOutput)monthAtEqualLoss.getCostFunctionOutput();
-				Number monthsToEqualize = monthAtEqualLoss.getParameterValues().get(0);
-				report += String.valueOf(homeValueFunc.startRent) + "," + String.valueOf(salePrice[i_sp]) +
-						"," + String.valueOf(appreciation[i_app]) + "," + String.valueOf(monthsToEqualize) + "\n";
+				for (int i_rm = 0;i_rm < roommates.length;i_rm++){
+					MarketCorrectionThenBounceBack homeValueFunc = new MarketCorrectionThenBounceBack(salePrice[i_sp],appreciation[i_app]);
+					boolean calculate = true;
+					if (salePrice[i_sp] > 300000 && salePrice[i_sp] < 400000){
+						//2 bedroom condo
+						if (roommates[i_rm] > 1){
+							//unrealistic scenario
+							calculate = false;
+						}
+					} else if (salePrice[i_sp] >= 400000 && salePrice[i_sp] < 475000){
+						//3 bedroom condo or townhouse
+						if (roommates[i_rm] > 2){
+							//unrealistic scenario
+							calculate = false;
+						}
+					} else if (salePrice[i_sp] >= 475000 && salePrice[i_sp] < 550000){
+						//Seems to be homes with 3 bedrooms and less hoa fee at this price point
+						if (roommates[i_rm] > 2){
+							//unrealistic scenario
+							calculate = false;
+						}
+						homeValueFunc.setHoaFee(150.0);
+					} else {
+						//about where HOA fees disappear
+						if (roommates[i_rm] > 3){
+							//unrealistic scenario
+							calculate = false;
+						}
+						homeValueFunc.setHoaFee(0.0);
+					}
+					if (calculate){
+						homeValueFunc.setNumberOfRoommates(roommates[i_rm]);
+						ParticleSwarm pso = new ParticleSwarm(30,1000,0.01,new ParticleParameter(0,360)).setOptimizationToRunForPeriodOfTime(5).setConvergenceLimit(20);
+						BestDiscoveredSolution monthAtEqualLoss = pso.optimize(homeValueFunc);
+						monthAtEqualLoss.printSolution();
+						HomeValueOutput output = (HomeValueOutput)monthAtEqualLoss.getCostFunctionOutput();
+						Number monthsToEqualize = monthAtEqualLoss.getParameterValues().get(0);
+						Double[] vals = {homeValueFunc.monthsCorrection,homeValueFunc.correctionPercPerYear,homeValueFunc.startRent, Double.valueOf(homeValueFunc.getNumberOfRoommates()),
+								homeValueFunc.roommateRent, homeValueFunc.getHoaFee(),
+								salePrice[i_sp],appreciation[i_app],monthsToEqualize.doubleValue(),homeValueFunc.monthlyOutOfPocket};
+						report += Arrays.asList(vals).stream().map((val) -> String.valueOf(val)).collect(Collectors.joining(",")) +"\n";
+					}
+				}
 			}
 		}
 		FileWriter writer = new FileWriter(reportFile);
@@ -48,7 +108,7 @@ public class HomeValueCostFunction implements CostFunction_IF{
 		writer.close();
 	}
 	
-	public HomeValueCostFunction(double salePrice, double appreciation){
+	public MarketCorrectionThenBounceBack(double salePrice, double appreciation){
 		this.salePrice = salePrice;
 		this.rateOfAppreciation = appreciation;
 	}
@@ -84,11 +144,19 @@ public class HomeValueCostFunction implements CostFunction_IF{
 		double aSunkCost = 0.0;
 		
 		for (int i_month = 0;i_month < months;i_month++){
-			appreciationMultiplier = Math.pow(1.0 + rateOfAppreciation/100.0,i_month/12.0);
+			if (monthsCorrection <= 0){
+				appreciationMultiplier = Math.pow(1.0 + rateOfAppreciation/100.0,i_month/12.0);
+			}else if (i_month <= monthsCorrection){
+				appreciationMultiplier = Math.pow(1.0 - correctionPercPerYear/100.0,i_month/12.0);
+			} else {
+				double totalCorrrection = Math.pow(1.0 - correctionPercPerYear/100.0,monthsCorrection/12.0);
+				appreciationMultiplier = Math.pow(1.0 + rateOfAppreciation/100.0,i_month/12.0)*totalCorrrection;
+			}
+			
 			appreciatedHomeValue = salePrice*appreciationMultiplier;
 			//Assume hoa fee scales with appreciation
-			totalSunkCostHome += hoaFee*appreciationMultiplier;
-			totalMonthlyOutOfPocket += hoaFee*appreciationMultiplier + mortgagePayment;
+			totalSunkCostHome += (hoaFee - roommateRent*numberOfRoommates)*appreciationMultiplier;
+			totalMonthlyOutOfPocket += (hoaFee - roommateRent*numberOfRoommates)*appreciationMultiplier + mortgagePayment;
 			//If 20% of slae prce is paid, stop paying pmi
 			if (salePrice - owedValue < 0.2*salePrice && sunkLossPercentages.containsKey("pmi")){
 				sunkLossPercentages.remove("pmi");
@@ -111,7 +179,7 @@ public class HomeValueCostFunction implements CostFunction_IF{
 		
 		totalMonthlyOutOfPocket = totalMonthlyOutOfPocket/months;
 		homeNet = appreciatedHomeValue - totalSunkCostHome - owedValue;
-		
+		this.monthlyOutOfPocket = totalMonthlyOutOfPocket;
 		return new HomeValueOutput(Math.abs(homeNet - rentNet),totalMonthlyOutOfPocket);
 	}
 	
@@ -138,7 +206,7 @@ public class HomeValueCostFunction implements CostFunction_IF{
 
 		@Override
 		public boolean isOptimizationCriterionSatisified() {
-			if (this.differenceBetweenHomeAndRentNet < 600){
+			if (this.differenceBetweenHomeAndRentNet < 1200.0){
 				return true;
 			}
 			return false;

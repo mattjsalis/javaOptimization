@@ -10,9 +10,13 @@ import java.util.Random;
 public enum RandomNumberGenerator {
 	UNIFORM,GAUSSIAN{
 		@Override
-		public Number getRandomNumber(Number mean, Number stdev, Class<? extends Number> classToConvertTo){
-
-			double randVal = mean.doubleValue() + stdev.doubleValue()*random.nextGaussian();
+		public Number getRandomNumber(Number mean, Number range, Class<? extends Number> classToConvertTo){
+			double posOrNeg = -1.0;
+			if (random.nextBoolean()){
+				posOrNeg = 1.0;
+			}
+			double stdev = range.doubleValue()/6.0;
+			double randVal = mean.doubleValue() + posOrNeg*stdev*random.nextGaussian();
 			if (classToConvertTo.equals(Integer.class)){
 				return new Integer(Math.round((float)randVal));
 			}
@@ -22,9 +26,13 @@ public enum RandomNumberGenerator {
 
 	public Random random = new Random();
 	
-	public Number getRandomNumber(Number mean, Number stdev, Class<? extends Number> classToConvertTo){
+	public Number getRandomNumber(Number mean, Number range, Class<? extends Number> classToConvertTo){
 		//Default is uniform distribution
-		double randVal = mean.doubleValue() + 3.0/2.0*stdev.doubleValue()*random.nextDouble();
+		double posOrNeg = -1.0;
+		if (random.nextBoolean()){
+			posOrNeg = 1.0;
+		}
+		double randVal = mean.doubleValue() + posOrNeg*0.5*range.doubleValue()*random.nextDouble();
 		if (classToConvertTo.equals(Integer.class)){
 			return new Integer(Math.round((float)randVal));
 		}

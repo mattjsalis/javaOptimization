@@ -33,8 +33,7 @@ public class Parameter implements Cloneable{
 	public Number lowerBound = null;
 	public Number upperBound = null;
 	public Double mean = null;
-	public Double halfRange = null;
-	public Double thirdRange = null;
+	public Double range = null;
 	public Number currentValue = null;
 	protected RandomNumberGenerator randNumberGen = RandomNumberGenerator.UNIFORM;
 	public boolean reinitializeUponOutOfBounds = false;
@@ -49,7 +48,7 @@ public class Parameter implements Cloneable{
 		this.lowerBound = lowerBound;
 		this.upperBound = upperBound;
 		setStatsForNumber(lowerBound,upperBound);
-		this.currentValue = RandomNumberGenerator.UNIFORM.getRandomNumber(mean, thirdRange,paramType.returnType);
+		this.currentValue = RandomNumberGenerator.UNIFORM.getRandomNumber(mean, range,paramType.returnType);
 	}
 	/**
 	 * Constructor to define a parameter of numeric type Integer with the lower and upper bounds of the parameter.
@@ -61,7 +60,7 @@ public class Parameter implements Cloneable{
 		this.lowerBound = lowerBound;
 		this.upperBound = upperBound;
 		setStatsForNumber(lowerBound,upperBound);
-		this.currentValue = RandomNumberGenerator.UNIFORM.getRandomNumber(mean, thirdRange,paramType.returnType);
+		this.currentValue = RandomNumberGenerator.UNIFORM.getRandomNumber(mean, range,paramType.returnType);
 
 	}
 	/**
@@ -90,9 +89,8 @@ public class Parameter implements Cloneable{
 	 * @param upperBound
 	 */
 	private void setStatsForNumber(Number lowerBound,Number upperBound){
-		this.thirdRange = (upperBound.doubleValue() - lowerBound.doubleValue())/3.0;
-		this.halfRange = thirdRange*3/2;
-		this.mean = lowerBound.doubleValue() + halfRange;
+		this.range = upperBound.doubleValue()  - lowerBound.doubleValue() ;
+		this.mean = lowerBound.doubleValue() + range/2.0;
 	}
 	/**
 	 * Sets hyperparameters required for parameter value initialization
@@ -103,7 +101,7 @@ public class Parameter implements Cloneable{
 		this.lowerBound = Integer.valueOf(categoricalMap.values().stream().min(Integer::compare).get());
 		this.upperBound = Integer.valueOf(categoricalMap.values().stream().max(Integer::compare).get());
 		setStatsForNumber(lowerBound,upperBound);
-		this.currentValue = RandomNumberGenerator.UNIFORM.getRandomNumber(mean, thirdRange,paramType.returnType);
+		this.currentValue = RandomNumberGenerator.UNIFORM.getRandomNumber(mean, range,paramType.returnType);
 	}
 	/**
 	 * Reinitializes the parameter based on a defined distribution type and the current hyperparameters
@@ -112,7 +110,7 @@ public class Parameter implements Cloneable{
 	 */
 	public Parameter renitializeValue(RandomNumberGenerator randomNumberGenerator){
 		this.randNumberGen = randomNumberGenerator;
-		this.currentValue = randomNumberGenerator.getRandomNumber(mean, thirdRange,paramType.returnType);
+		this.currentValue = randomNumberGenerator.getRandomNumber(mean, range,paramType.returnType);
 		return this;
 	}
 	/**
@@ -121,7 +119,7 @@ public class Parameter implements Cloneable{
 	 * @return
 	 */
 	public void renitializeValue(){
-		this.currentValue = randNumberGen.getRandomNumber(mean, thirdRange,paramType.returnType);
+		this.currentValue = randNumberGen.getRandomNumber(mean, range,paramType.returnType);
 	}
 	/**
 	 * Sets the parameter to reinitialize itself based on the current distribution type and hyperparameters
@@ -141,13 +139,13 @@ public class Parameter implements Cloneable{
 	public void updateAndBoundCurrentValue(Number valueToBound){
 		if (valueToBound.doubleValue() < this.lowerBound.doubleValue()){
 			if (reinitializeUponOutOfBounds){
-				this.currentValue = randNumberGen.getRandomNumber(mean, thirdRange, paramType.returnType);
+				this.currentValue = randNumberGen.getRandomNumber(mean, range, paramType.returnType);
 			} else {
 				this.currentValue = randNumberGen.getRandomNumber(lowerBound, 0, paramType.returnType);
 			}
 		} else if (valueToBound.doubleValue() > this.upperBound.doubleValue()){
 			if (reinitializeUponOutOfBounds){
-				this.currentValue = randNumberGen.getRandomNumber(mean, thirdRange, paramType.returnType);
+				this.currentValue = randNumberGen.getRandomNumber(mean, range, paramType.returnType);
 			} else {
 				this.currentValue = randNumberGen.getRandomNumber(upperBound, 0, paramType.returnType);
 			}
@@ -187,7 +185,7 @@ public class Parameter implements Cloneable{
 		return this.currentValue.doubleValue();
 	}
 	public Double getRangeOfParameterValue(){
-		return 2.0*this.halfRange;
+		return range;
 	}
 	@Override
 	public Parameter clone() throws CloneNotSupportedException{

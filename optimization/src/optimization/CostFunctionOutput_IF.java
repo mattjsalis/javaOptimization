@@ -6,7 +6,7 @@ package optimization;
  *
  */
 public interface CostFunctionOutput_IF {
-	public boolean isNewCostFunctionOutputBetter(CostFunctionOutput_IF oldCFOutput, CostFunctionOutput_IF newCFOutput);
+	public boolean isNewCostFunctionOutputBetter(CostFunctionOutput_IF newCFOutput);
 	public boolean isOptimizationCriterionSatisified();
 	public boolean isSolutionWithinRestraints();
 	public void printOutput();
