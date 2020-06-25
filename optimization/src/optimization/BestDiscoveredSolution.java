@@ -1,5 +1,6 @@
 package optimization;
 
+import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -18,6 +19,9 @@ public class BestDiscoveredSolution implements Cloneable{
 	}
 	public List<Number> getParameterValues(){
 		return Stream.of(parameters).map((param) -> param.getCurrentValue()).collect(Collectors.toList());
+	}
+	public List<Parameter> getParameters(){
+		return Arrays.asList(parameters);
 	}
 	public CostFunctionOutput_IF getCostFunctionOutput(){
 		return this.costFunctionReturnValue;

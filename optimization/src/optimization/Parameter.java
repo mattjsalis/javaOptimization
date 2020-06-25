@@ -118,8 +118,9 @@ public class Parameter implements Cloneable{
 	 * @param randomNumberGenerator
 	 * @return
 	 */
-	public void renitializeValue(){
+	public Parameter renitializeValue(){
 		this.currentValue = randNumberGen.getRandomNumber(mean, range,paramType.returnType);
+		return this;
 	}
 	/**
 	 * Sets the parameter to reinitialize itself based on the current distribution type and hyperparameters

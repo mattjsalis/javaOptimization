@@ -152,7 +152,9 @@ public class ParticleSwarm implements Optimizer_IF{
 				return swarmOverallBest;
 			}
 		}
-		
+		if (swarmOverallBest == null){
+			swarmOverallBest = swarmBest;
+		}
 		if (runForSpecifiedTime && !swarmOverallBest.getCostFunctionOutput().isOptimizationCriterionSatisified()){
 			double elapsedTime = Double.valueOf(System.nanoTime())/1E9;
 			if (elapsedTime - startTime < maxRunTime){
